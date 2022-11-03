@@ -138,9 +138,9 @@ st.markdown("<h2 style='text-align: center; color: white;'>Choose nodes to go de
 last_selected_foses = st.session_state.selected_foses
 selected_foses = st.multiselect('', st.session_state.all_foses,
                                 default=st.session_state.selected_foses)
-st.session_state.rerun_idx += 1
-if st.session_state.rerun_idx % 2 == 0:
-    st.experimental_rerun()
+# st.session_state.rerun_idx += 1
+# if st.session_state.rerun_idx % 2 == 0:
+#     st.experimental_rerun()
 
 for fos in selected_foses:
     if fos not in st.session_state.selected_foses:
