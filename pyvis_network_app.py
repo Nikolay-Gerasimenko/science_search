@@ -82,7 +82,9 @@ st.set_page_config(layout="wide")
 ##############################################################################################################################
 fos_df = pd.read_csv('data/fos_df.csv')
 fos_df.dropna(inplace=True)
-children_fos_df = pd.read_csv('data/children_fos_df.csv')
+children_fos_df1 = pd.read_csv('data/children_fos_df_part1.csv')
+children_fos_df2 = pd.read_csv('data/children_fos_df_part2.csv')
+children_fos_df = pd.concat([children_fos_df1, children_fos_df2], ignore_index=True)
 
 
 if 'all_foses' not in st.session_state:
