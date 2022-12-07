@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
+import math
 import json
 import networkx as nx
 from pyvis.network import Network
@@ -116,6 +117,21 @@ def get_brothers(entity):
     return [child for parent in get_parents(entity) for child in get_children(parent)]
 
 
+def get_connection_power(name1, name2):
+    entity1 = get_entity_by_name(name1)
+    entity2 = get_entity_by_name(name2)
+    df1 = children_fos_df[(children_fos_df.parent_fos == entity1) & (children_fos_df.children_fos == entity2)]
+    if len(df1):
+        return df1.iloc[0].connection_power
+    else:
+        df2 = children_fos_df[(children_fos_df.parent_fos == entity2) & (children_fos_df.children_fos == entity1)]
+        if len(df2):
+            return df2.iloc[0].connection_power    
+    
+    
+#     connection_powers = children_fos_df[children_fos_df.parent_fos == request].connection_power.values
+
+
 st.markdown("<h2 style='text-align: center; color: white;'>Enter your query</h2>", unsafe_allow_html=True)
 
 text_request = set(st.text_input('').lower().split())
@@ -131,8 +147,13 @@ foses = fos_df[fos_df['match_len'] > 0].sort_values('match_len', ascending=False
 for fos in foses:
     if fos not in st.session_state.all_foses:
         st.session_state.all_foses.append(fos)
-        
+
 max_n = st.selectbox('Choose max N of children and parents of node', list(range(1, 100)))
+log_degree = st.selectbox('Choose degree of logarithm', list(range(1, 10)), index=1)
+fos_df['log_power'] = fos_df.power.apply(lambda power: math.log(power, log_degree))
+power_dict = dict(fos_df[['name', 'log_power']].to_records(index=False))
+
+
 
 st.markdown("<h2 style='text-align: center; color: white;'>Choose nodes to go deeper</h2>", unsafe_allow_html=True)
 last_selected_foses = st.session_state.selected_foses
@@ -161,11 +182,22 @@ for fos in foses:
         st.session_state.all_foses.append(fos)
 
 G = nx.DiGraph()
+# for request in selected_foses:
+#     connection_powers = children_fos_df[children_fos_df.parent_fos == request].connection_power.values
+#     for i in range(len(results[request])):
+#         row = results[request].iloc[i]
+        
+        
+        
+#         request_df = children_fos_df[children_fos_df.parent_fos == request]
+#         connection_power = request_df[request_df.children_fos == row['name']].iloc[0].connection_power
+#         G.add_edge(request, row.name, connection_powers[i])
+#     if len(results[request]) == 0:, label=row['connection_power']
+#         G.add_edge(request, request)
+
 for request in selected_foses:
     for name in results[request].name:
-        G.add_edge(request, name)
-#     if len(results[request]) == 0:
-#         G.add_edge(request, request)
+        G.add_edge(request, name, label=round(get_connection_power(request, name), 2))
 
 results = {}
 for request in selected_foses:
@@ -178,9 +210,15 @@ for fos in foses:
     if fos not in st.session_state.all_foses:
         st.session_state.all_foses.append(fos)
 
+# for request in selected_foses:
+#     for i in range(len(results[request])):
+#         row = results[request].iloc[i]
+#         request_df = children_fos_df[children_fos_df.parent_fos == request]
+#         connection_power = request_df[request_df.children_fos == row.name].iloc[0].connection_power
+#         G.add_edge(request, row.name, connection_power)
 for request in selected_foses:
     for name in results[request].name:
-        G.add_edge(name, request)
+        G.add_edge(name, request, label=round(get_connection_power(request, name), 2))
 
 nt = Network(
     directed=True,
@@ -189,6 +227,8 @@ nt = Network(
     bgcolor='#222222',
     font_color='white'
 )
+
+nx.set_node_attributes(G, power_dict, 'size')
 nt.from_nx(G)
 nt.repulsion(node_distance=420, central_gravity=0.1,
              spring_length=110, spring_strength=0.10,
