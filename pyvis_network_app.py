@@ -148,7 +148,7 @@ for fos in foses:
     if fos not in st.session_state.all_foses:
         st.session_state.all_foses.append(fos)
 
-max_n = st.selectbox('Choose max N of children and parents of node', list(range(1, 100)))
+max_n = st.selectbox('Choose max N of children and parents of node', list(range(1, 100)), index=9)
 log_degree = st.selectbox('Choose degree of logarithm', list(range(1, 10)), index=1)
 fos_df['log_power'] = fos_df.power.apply(lambda power: math.log(power, log_degree))
 power_dict = dict(fos_df[['name', 'log_power']].to_records(index=False))
